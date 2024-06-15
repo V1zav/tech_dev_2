@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Page</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="{% url 'contacts' %}" class="nav-link">Contacts</a>
+    <a href="{% url 'about' %}" class="nav-link">About</a>
+    <a href="{% url 'login' %}" class="nav-link">Login</a>
+    <a href="{% url 'register' %}" class="nav-link">Registration</a>
+    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+  </nav>
+  <div class="container home-page">
+    <h1>Welcome to the Home Page</h1>
+    <p>This is the home page of our contact management application. Here you can navigate to different sections such as Contacts, About, Login, Registration, and Profile.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Page</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="{% url 'home' %}" class="nav-link">Home</a>
+    <a href="{% url 'contacts' %}" class="nav-link">Contacts</a>
+    <a href="{% url 'login' %}" class="nav-link">Login</a>
+    <a href="{% url 'register' %}" class="nav-link">Registration</a>
+    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+  </nav>
+  <div class="container">
+    <h1>About Page</h1>
+    <p>This is the about page of our contact management application. Here you can find information about the purpose of the application, its features, and the team behind its development.</p>
+  </div>
+</body>
+</html>

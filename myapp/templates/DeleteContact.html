@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Contact</title>
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="{% url 'home' %}" class="nav-link">Home</a>
+    <a href="{% url 'about' %}" class="nav-link">About</a>
+    <a href="{% url 'contacts' %}" class="nav-link">Contacts</a>
+    <a href="{% url 'login' %}" class="nav-link">Login</a>
+    <a href="{% url 'register' %}" class="nav-link">Registration</a>
+    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+  </nav>
+  <h1>Delete Contact</h1>
+  <p>Are you sure you want to delete this contact?</p>
+  <p>{{ contact.name }} - {{ contact.email }}</p>
+  <form action="{% url 'delete_contact' contact_id %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+  </form>
+</body>
+</html>

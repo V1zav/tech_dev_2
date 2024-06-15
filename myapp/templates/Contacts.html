@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacts</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <style>
+    .list-group-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .edit-contact, .delete-contact, .save-contact {
+      margin-left: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .edit-contact:hover, .delete-contact:hover, .save-contact:hover {
+      background-color: #0056b3;
+    }
+    .sort-options {
+      margin-bottom: 20px;
+      list-style-type: none;
+      padding: 0;
+    }
+    .sort-options li {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .sort-arrow {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-links">
+    <a href="{% url 'home' %}" class="nav-link">Home</a>
+    <a href="{% url 'about' %}" class="nav-link">About</a>
+    <a href="{% url 'login' %}" class="nav-link">Login</a>
+    <a href="{% url 'register' %}" class="nav-link">Registration</a>
+    <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+    <input type="text" id="search" placeholder="Search...">
+  </nav>
+  <div class="container">
+    <h1>Contacts Page</h1>
+    <div class="mb-3">
+      <ul class="sort-options">
+        <li><button class="sort" data-sort-by="name">Sort by Name<span class="sort-arrow">&#8597;</span></button></li>
+        <li><button class="sort" data-sort-by="email">Sort by Email<span class="sort-arrow">&#8597;</span></button></li>
+        <li><button class="sort" data-sort-by="phone_number">Sort by Phone Number<span class="sort-arrow">&#8597;</span></button></li>
+        <li><button class="sort" data-sort-by="address">Sort by Address<span class="sort-arrow">&#8597;</span></button></li>
+      </ul>
+    </div>
+    <div class="mb-3">
+      <ul class="list-group" id="contacts-list">
+        <!-- Contacts will be dynamically inserted here -->
+      </ul>
+    </div>
+    <form id="add-contact-form">
+      {% csrf_token %}
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" required>
+      <label for="address">Address:</label>
+      <textarea id="address" name="address" required></textarea>
+      <button type="button" id="add-contact">Add Contact</button>
+    </form>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      var socket = new WebSocket('ws://' + window.location.host + '/ws/contacts/');
+
+      socket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var action = data.action;
+
+        if (action === 'load_contacts') {
+          loadContacts(data.contacts);
+        } else if (action === 'add_contact') {
+          addContact(data.contact);
+        } else if (action === 'edit_contact') {
+          editContact(data.contact);
+        } else if (action === 'delete_contact') {
+          deleteContact(data.id);
+        }
+      };
+
+      socket.onopen = function() {
+        socket.send(JSON.stringify({ action: 'load_contacts' }));
+      };
+
+      function loadContacts(contacts) {
+        $('#contacts-list').empty();
+        contacts.forEach(function(contact) {
+          $('#contacts-list').append('<li class="list-group-item" data-id="' + contact.id + '">' +
+            '<strong>Name:</strong> <span class="editable" data-field="name">' + contact.name + '</span><br>' +
+            '<strong>Email:</strong> <span class="editable" data-field="email">' + contact.email + '</span><br>' +
+            '<strong>Phone:</strong> <span class="editable" data-field="phone_number">' + contact.phone_number + '</span><br>' +
+            '<strong>Address:</strong> <span class="editable" data-field="address">' + contact.address + '</span><br>' +
+            '<button class="edit-contact">Edit</button> ' +
+            '<button class="delete-contact">Delete</button></li>');
+        });
+      }
+
+      function addContact(contact) {
+        $('#contacts-list').append('<li class="list-group-item" data-id="' + contact.id + '">' +
+          '<strong>Name:</strong> <span class="editable" data-field="name">' + contact.name + '</span><br>' +
+          '<strong>Email:</strong> <span class="editable" data-field="email">' + contact.email + '</span><br>' +
+          '<strong>Phone:</strong> <span class="editable" data-field="phone_number">' + contact.phone_number + '</span><br>' +
+          '<strong>Address:</strong> <span class="editable" data-field="address">' + contact.address + '</span><br>' +
+          '<button class="edit-contact">Edit</button> ' +
+          '<button class="delete-contact">Delete</button></li>');
+      }
+
+      function editContact(contact) {
+        var contactElement = $('#contacts-list').find('li[data-id="' + contact.id + '"]');
+        contactElement.find('.editable[data-field="name"]').text(contact.name);
+        contactElement.find('.editable[data-field="email"]').text(contact.email);
+        contactElement.find('.editable[data-field="phone_number"]').text(contact.phone_number);
+        contactElement.find('.editable[data-field="address"]').text(contact.address);
+      }
+
+      function deleteContact(id) {
+        $('#contacts-list').find('li[data-id="' + id + '"]').remove();
+      }
+
+      $('#search').on('input', function() {
+        const query = $(this).val().toLowerCase();
+        $('#contacts-list .list-group-item').each(function() {
+          const name = $(this).find('.editable[data-field="name"]').text().toLowerCase();
+          const email = $(this).find('.editable[data-field="email"]').text().toLowerCase();
+          const phone = $(this).find('.editable[data-field="phone_number"]').text().toLowerCase();
+          const address = $(this).find('.editable[data-field="address"]').text().toLowerCase();
+          if (name.includes(query) || email.includes(query) || phone.includes(query) || address.includes(query)) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      });
+
+      $('.sort').click(function(e) {
+        e.preventDefault();
+        const sortBy = $(this).data('sort-by');
+        const sortOrder = $(this).hasClass('asc') ? -1 : 1;
+        $(this).toggleClass('asc');
+        $(this).find('.sort-arrow').html(sortOrder === 1 ? '&#8593;' : '&#8595;');
+        const items = $('#contacts-list .list-group-item').get();
+        items.sort(function(a, b) {
+          const textA = $(a).find('.editable[data-field="' + sortBy + '"]').text().toUpperCase();
+          const textB = $(b).find('.editable[data-field="' + sortBy + '"]').text().toUpperCase();
+          return textA.localeCompare(textB) * sortOrder;
+        });
+        $('#contacts-list').empty().append(items);
+      });
+
+      $('#add-contact').click(function() {
+        const newName = $('#name').val();
+        const newEmail = $('#email').val();
+        const newPhone = $('#phone').val();
+        const newAddress = $('#address').val();
+
+        socket.send(JSON.stringify({
+          action: 'add_contact',
+          name: newName,
+          email: newEmail,
+          phone_number: newPhone,
+          address: newAddress
+        }));
+
+        $('#name').val('');
+        $('#email').val('');
+        $('#phone').val('');
+        $('#address').val('');
+      });
+
+      $(document).on('click', '.edit-contact', function() {
+        const contact = $(this).closest('li');
+        contact.find('.editable').each(function() {
+          const field = $(this).data('field');
+          const value = $(this).text();
+          $(this).replaceWith('<input type="text" class="edit-input" data-field="' + field + '" value="' + value + '">');
+        });
+        $(this).remove();
+        contact.append('<button class="save-contact">Save</button>');
+      });
+
+      $(document).on('click', '.save-contact', function() {
+        const contact = $(this).closest('li');
+        const id = contact.data('id');
+        const updatedContact = {};
+        contact.find('input').each(function() {
+          const field = $(this).data('field');
+          const value = $(this).val();
+          updatedContact[field] = value;
+          $(this).replaceWith('<span class="editable" data-field="' + field + '">' + value + '</span>');
+        });
+        $(this).remove();
+
+        socket.send(JSON.stringify({
+          action: 'edit_contact',
+          id: id,
+          ...updatedContact
+        }));
+      });
+
+      $(document).on('click', '.delete-contact', function() {
+        const contactId = $(this).closest('li').data('id');
+        if (confirm('Are you sure you want to delete this contact?')) {
+          socket.send(JSON.stringify({ action: 'delete_contact', id: contactId }));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
